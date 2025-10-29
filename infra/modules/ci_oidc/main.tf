@@ -37,7 +37,7 @@ resource "aws_iam_role" "gha_oidc" {
 
 resource "aws_iam_policy" "gha_policy" {
   name        = "${var.project_name}-gha-policy"
-  description = "Least-privilege permissions for GitHub Actions Terraform deployments"
+  description = "Permissions for GitHub Actions OIDC role to deploy full AWS infrastructure via Terraform"
 
   policy = jsonencode({
     Version = "2012-10-17"
@@ -45,28 +45,41 @@ resource "aws_iam_policy" "gha_policy" {
       {
         Effect = "Allow"
         Action = [
+          # Networking
           "ec2:*",
-          "iam:*",
-          "ecr:*",
+          "elasticloadbalancing:*",
+          "autoscaling:*",
+
+          # Compute / Containers
           "ecs:*",
+          "ecr:*",
+
+          # API + CDN
           "apigateway:*",
-          "acm:*",
-          "cloudwatch:*",
-          "dynamodb:*",
-          "cognito-idp:*",
+          "cloudfront:*",
+
+          # DNS / Certificates
           "route53:*",
-          "logs:*",
+          "acm:*",
+
+          # Data
+          "dynamodb:*",
           "s3:*",
 
-          
-          "elasticloadbalancing:*",
-          "autoscaling:*"
+          # Auth / Security
+          "cognito-idp:*",
+          "iam:*",
+
+          # Monitoring / Logging
+          "cloudwatch:*",
+          "logs:*"
         ]
         Resource = "*"
       }
     ]
   })
 }
+
 
 
 resource "aws_iam_role_policy_attachment" "gha_policy_attach" {
