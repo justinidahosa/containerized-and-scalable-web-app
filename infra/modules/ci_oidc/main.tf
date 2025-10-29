@@ -56,13 +56,18 @@ resource "aws_iam_policy" "gha_policy" {
           "cognito-idp:*",
           "route53:*",
           "logs:*",
-          "s3:*"
+          "s3:*",
+
+          
+          "elasticloadbalancing:*",
+          "autoscaling:*"
         ]
         Resource = "*"
       }
     ]
   })
 }
+
 
 resource "aws_iam_role_policy_attachment" "gha_policy_attach" {
   role       = aws_iam_role.gha_oidc.name
