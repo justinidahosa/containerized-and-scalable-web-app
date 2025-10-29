@@ -1,12 +1,11 @@
-Containerized and Scalable Web Application on AWS
-Overview
+# Containerized and Scalable Web Application on AWS
+## Overview
 
 This project deploys a containerized web application on AWS using Terraform modules and a GitHub Actions CI/CD pipeline integrated through OIDC.
 The architecture demonstrates a secure, scalable, and automated deployment of cloud infrastructure and application code without using static AWS credentials.
 
-Architecture
-
-AWS Services Used
+## Architecture
+### AWS Services Used
 
 VPC, Subnets, NAT Gateway – Isolated and secure networking.
 
@@ -22,13 +21,13 @@ CloudWatch – Monitoring and alarm management.
 
 S3 + DynamoDB – Terraform state management and locking.
 
-Flow
+## Flow
+
 Users access the app through CloudFront or the ALB (HTTPS).
 Traffic routes to ECS Fargate containers, which interact with DynamoDB.
 CloudWatch provides metrics and operational visibility.
 
-Automation
-
+## Automation
 Terraform Modules
 
 Network, ALB, ECS, DynamoDB, ACM, CloudFront, Cognito, Route 53, and Monitoring.
@@ -45,9 +44,9 @@ Deploys infrastructure and services with Terraform.
 
 Uses OIDC for secure AWS access (no static credentials).
 
-Application
+## Application
 
-Simple Node.js service containerized with Docker:
+A simple Node.js service containerized with Docker:
 
 FROM node:20-alpine
 WORKDIR /app
@@ -56,7 +55,7 @@ RUN npm install --omit=dev
 EXPOSE 3000
 CMD ["node", "server.js"]
 
-Key Outcomes
+## Key Outcomes
 
 Fully automated infrastructure and deployment using Terraform and OIDC.
 
