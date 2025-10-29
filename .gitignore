@@ -4,8 +4,7 @@
 .crash
 .terraform/
 .terraform.lock.hcl
-infra/terraform.tfvars
-bootstrap/terraform.tfvars
+
 
 # Node
 node_modules/
