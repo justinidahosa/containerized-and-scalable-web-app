@@ -1,0 +1,61 @@
+name: Terraform & Deploy
+
+on:
+  push:
+    branches: [ "main" ]
+  workflow_dispatch:
+
+permissions:
+  id-token: write
+  contents: read
+
+env:
+  AWS_REGION: us-east-1
+  TF_WORKING_DIR: infra
+  ECR_REPO: ${{ secrets.ECR_REPO_URL }}   # set once after first apply: repo URL output
+  IMAGE_TAG: ${{ github.sha }}
+
+jobs:
+  plan-apply-build-deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Configure AWS (OIDC)
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.DEPLOY_ROLE_ARN }} # set to output gha_role_arn
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+
+      - name: Terraform Init
+        working-directory: ${{ env.TF_WORKING_DIR }}
+        run: terraform init -input=false
+
+      - name: Terraform Plan
+        working-directory: ${{ env.TF_WORKING_DIR }}
+        run: terraform plan -input=false -out=tfplan
+
+      - name: Terraform Apply
+        if: github.ref == 'refs/heads/main'
+        working-directory: ${{ env.TF_WORKING_DIR }}
+        run: terraform apply -input=false -auto-approve tfplan
+
+      - name: Login to ECR
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Build & Push Image
+        run: |
+          docker build -t "$ECR_REPO:$IMAGE_TAG" ./app
+          docker push "$ECR_REPO:$IMAGE_TAG"
+
+      - name: Update Task Definition (new image tag)
+        working-directory: ${{ env.TF_WORKING_DIR }}
+        run: |
+          # write image tag into terraform.tfvars (simple approach for beginners)
+          sed -i "s/^image_tag *=.*/image_tag = \"${IMAGE_TAG}\"/g" terraform.tfvars || true
+          terraform apply -auto-approve
