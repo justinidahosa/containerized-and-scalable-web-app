@@ -8,9 +8,9 @@ module "network" {
 }
 
 module "acm" {
-  source        = "./modules/acm"
-  project_name  = var.project_name
-  domain_name   = var.domain_name
+  source         = "./modules/acm"
+  domain_name    = var.domain_name
+  hosted_zone_id = var.hosted_zone_id
 }
 
 module "alb" {
@@ -50,12 +50,15 @@ module "ecs" {
   dynamodb_table_name   = module.dynamodb.table_name
 }
 
-module "cloudfront" {
-  source          = "./modules/cloudfront"
-  project_name    = var.project_name
-  alb_dns_name    = module.alb.alb_dns_name
-  certificate_arn = module.acm.certificate_arn
+
+module "cloudfront_frontend" {
+  source                = "./modules/cloudfront_frontend"
+  project_name          = var.project_name
+  s3_bucket_domain_name = module.s3_frontend.bucket_domain_name
+  oai_path              = module.s3_frontend.oai_path
+  certificate_arn       = module.acm.certificate_arn
 }
+
 
 
 module "cognito" {
@@ -89,8 +92,8 @@ module "route53" {
   domain_name              = var.domain_name
   subdomain_app            = var.subdomain_app
   subdomain_api            = var.subdomain_api
-  cloudfront_domain_name   = module.cloudfront.domain_name
-  cloudfront_hosted_zone_id= module.cloudfront.hosted_zone_id
+  cloudfront_domain_name   = module.cloudfront_frontend.cloudfront_domain_name
+  cloudfront_hosted_zone_id= module.cloudfront_frontend.cloudfront_zone_id
   api_gw_domain_name       = module.apigw.api_domain_name
   api_gw_hosted_zone_id    = module.apigw.api_hosted_zone_id
   alb_dns_name             = module.alb.alb_dns_name
@@ -112,4 +115,9 @@ module "ci_oidc" {
   project_name= var.project_name
   github_org  = var.github_org
   github_repo = var.github_repo
+}
+
+module "s3_frontend" {
+  source       = "./modules/s3_frontend"
+  project_name = var.project_name
 }

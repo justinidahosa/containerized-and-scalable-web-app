@@ -1,5 +1,5 @@
-output "cloudfront_domain" { 
-    value = module.cloudfront.domain_name 
+output "cloudfront_domain" {
+  value = module.cloudfront_frontend.cloudfront_domain_name
 }
 output "app_url"           { 
     value = "https://${var.subdomain_app}.${var.domain_name}" 
