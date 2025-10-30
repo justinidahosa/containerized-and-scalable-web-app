@@ -6,7 +6,7 @@ on:
   workflow_dispatch:
 
 permissions:
-  id-token: write      
+  id-token: write
   contents: read
 
 env:
@@ -59,6 +59,23 @@ jobs:
           terraform apply -auto-approve
 
       - name: Upload Frontend to S3
-        if: github.ref == 'refs/heads/main' && secrets.S3_FRONTEND_BUCKET != ''
+        if: github.ref == 'refs/heads/main'
         run: |
-          aws s3 sync ./frontend "s3://${{ secrets.S3_FRONTEND_BUCKET }}" --delete
+          if [ -n "${{ secrets.S3_FRONTEND_BUCKET }}" ]; then
+            echo "Uploading frontend assets to S3..."
+            aws s3 sync ./frontend "s3://${{ secrets.S3_FRONTEND_BUCKET }}" --delete
+          else
+            echo "⚠️ S3_FRONTEND_BUCKET secret not set — skipping upload."
+          fi
+
+      - name: Invalidate CloudFront Cache
+        if: github.ref == 'refs/heads/main'
+        run: |
+          if [ -n "${{ secrets.CLOUDFRONT_DIST_ID }}" ]; then
+            echo "Invalidating CloudFront cache..."
+            aws cloudfront create-invalidation \
+              --distribution-id "${{ secrets.CLOUDFRONT_DIST_ID }}" \
+              --paths "/*"
+          else
+            echo "⚠️ CLOUDFRONT_DIST_ID secret not set — skipping cache invalidation."
+          fi
