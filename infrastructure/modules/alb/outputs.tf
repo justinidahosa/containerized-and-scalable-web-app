@@ -17,3 +17,7 @@ output "alb_security_group_id" {
 output "https_listener_arn" {
   value = aws_lb_listener.https.arn
 }
+output "certificate_arn" {
+  value = var.certificate_arn
+}
+
