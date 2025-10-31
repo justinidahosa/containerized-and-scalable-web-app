@@ -16,7 +16,7 @@ container_memory    = 512
 desired_count       = 2
 
 dynamodb_table_name = "app-items"
-jwt_audience        = ["app-client"]  # will be replaced by Cognito app client id output
+jwt_audience        = ["app-client"] 
 
 github_org          = "justinidahosa"
 github_repo         = "containerized-and-scalable-web-app"

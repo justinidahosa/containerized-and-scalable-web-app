@@ -68,7 +68,7 @@ module "cloudfront_frontend" {
   project_name          = var.project_name
   s3_bucket_domain_name = module.s3_frontend.bucket_domain_name
   certificate_arn       = module.acm.certificate_arn
-  oai_path              = module.s3_frontend.oai_path
+  alb_dns_name          = module.alb.alb_dns_name
 }
 
 
@@ -106,7 +106,7 @@ module "route53" {
   subdomain_app              = var.subdomain_app
   subdomain_api              = var.subdomain_api
   cloudfront_domain_name     = module.cloudfront_frontend.cloudfront_domain_name
-  cloudfront_hosted_zone_id  = module.cloudfront_frontend.cloudfront_hosted_zone_id
+  cloudfront_hosted_zone_id  = module.cloudfront_frontend.cloudfront_zone_id
   api_gw_domain_name         = module.apigw.api_domain_name
   api_gw_hosted_zone_id      = module.apigw.api_hosted_zone_id
   alb_dns_name               = module.alb.alb_dns_name

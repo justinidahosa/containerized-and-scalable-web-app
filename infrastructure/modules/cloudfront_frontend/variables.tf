@@ -1,13 +1,13 @@
-variable "project_name" { 
-  type = string 
+variable "project_name" {
+  type = string
 }
-variable "s3_bucket_domain_name" { 
-  type = string 
+variable "s3_bucket_domain_name" {
+  type = string
 }
-variable "oai_path" { 
-  type = string 
-  default = null
+variable "alb_dns_name" {
+  type = string
 }
-variable "certificate_arn" { 
-  type = string 
+variable "certificate_arn" {
+  type = string
 }
+
