@@ -6,6 +6,7 @@ variable "s3_bucket_domain_name" {
 }
 variable "oai_path" { 
   type = string 
+  default = null
 }
 variable "certificate_arn" { 
   type = string 

@@ -4,7 +4,7 @@ resource "aws_cloudfront_distribution" "frontend_cf" {
   default_root_object = "index.html"
 
   origin {
-    domain_name = var.s3_bucket_domain_name
+    domain_name = var.s3_bucket_domain_name       
     origin_id   = "s3-frontend"
 
     s3_origin_config {
@@ -21,14 +21,18 @@ resource "aws_cloudfront_distribution" "frontend_cf" {
 
     forwarded_values {
       query_string = false
-      cookies { forward = "none" }
+      cookies {
+        forward = "none"
+      }
     }
   }
 
   price_class = "PriceClass_100"
 
   restrictions {
-    geo_restriction { restriction_type = "none" }
+    geo_restriction {
+      restriction_type = "none"
+    }
   }
 
   viewer_certificate {
@@ -36,4 +40,14 @@ resource "aws_cloudfront_distribution" "frontend_cf" {
     ssl_support_method       = "sni-only"
     minimum_protocol_version = "TLSv1.2_2021"
   }
+
+  tags = {
+    Name = "${var.project_name}-frontend-cf"
+  }
 }
+
+resource "aws_cloudfront_origin_access_identity" "oai" {
+  comment = "${var.project_name}-oai"
+}
+
+
