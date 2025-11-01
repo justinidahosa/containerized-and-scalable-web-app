@@ -40,7 +40,7 @@ CloudFront provides caching and global low-latency delivery.
 CloudWatch continuously monitors performance and health across all layers.
 
 ## Automation
-Terraform Modules
+### Terraform Modules
 
 This project is fully modularized for reusability and clarity. Key modules include:
 
