@@ -60,6 +60,7 @@ module "ecs" {
 module "s3_frontend" {
   source       = "./modules/s3_frontend"
   project_name = var.project_name
+  cloudfront_oai_iam_arn = module.cloudfront_frontend.cloudfront_oai_iam_arn
 }
 
 
@@ -69,6 +70,7 @@ module "cloudfront_frontend" {
   s3_bucket_domain_name = module.s3_frontend.bucket_domain_name
   certificate_arn       = module.acm.certificate_arn
   alb_dns_name          = module.alb.alb_dns_name
+  domain_name           = var.domain_name
 }
 
 
@@ -100,18 +102,17 @@ module "apigw" {
 
 
 module "route53" {
-  source                     = "./modules/route53"
-  hosted_zone_id             = var.hosted_zone_id
-  domain_name                = var.domain_name
+  source  = "./modules/route53"
+  hosted_zone_id            = var.hosted_zone_id
+  domain_name               = var.domain_name
   subdomain_app              = var.subdomain_app
   subdomain_api              = var.subdomain_api
   cloudfront_domain_name     = module.cloudfront_frontend.cloudfront_domain_name
   cloudfront_hosted_zone_id  = module.cloudfront_frontend.cloudfront_hosted_zone_id
   api_gw_domain_name         = module.apigw.api_domain_name
   api_gw_hosted_zone_id      = module.apigw.api_hosted_zone_id
-  alb_dns_name               = module.alb.alb_dns_name
-  alb_zone_id                = module.alb.alb_zone_id
 }
+
 
 module "monitoring" {
   source         = "./modules/monitoring"

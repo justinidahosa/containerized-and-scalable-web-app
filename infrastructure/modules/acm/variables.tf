@@ -1,6 +1,9 @@
 variable "domain_name" {
-  type = string
+  description = "Root domain name (e.g. justindemo.click)"
+  type        = string
 }
+
 variable "hosted_zone_id" {
-  type = string
+  description = "Route53 Hosted Zone ID for domain"
+  type        = string
 }

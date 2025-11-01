@@ -6,8 +6,12 @@ resource "aws_cloudfront_distribution" "frontend_cf" {
   enabled             = true
   comment             = "${var.project_name}-frontend-cf"
   default_root_object = "index.html"
+  
+  aliases = [
+  var.domain_name,
+  "app.${var.domain_name}"
+]
 
-  # --- S3 FRONTEND (Default Origin)
   origin {
     domain_name = var.s3_bucket_domain_name
     origin_id   = "s3-frontend"
@@ -17,7 +21,6 @@ resource "aws_cloudfront_distribution" "frontend_cf" {
     }
   }
 
-  # --- (Optional) ALB BACKEND FOR /api/*
   origin {
     domain_name = var.alb_dns_name
     origin_id   = "alb-origin"
@@ -30,40 +33,44 @@ resource "aws_cloudfront_distribution" "frontend_cf" {
     }
   }
 
-  # --- Default: S3 frontend
   default_cache_behavior {
     target_origin_id       = "s3-frontend"
     viewer_protocol_policy = "redirect-to-https"
-    allowed_methods        = ["GET", "HEAD", "OPTIONS"]  # ✅ valid combo
+    allowed_methods        = ["GET", "HEAD", "OPTIONS"] 
     cached_methods         = ["GET", "HEAD"]
     compress               = true
 
     forwarded_values {
       query_string = false
-      cookies { forward = "none" }
+      cookies {
+        forward = "none"
+      }
     }
   }
 
-  # --- API routes -> ECS backend
   ordered_cache_behavior {
     path_pattern           = "/api/*"
     target_origin_id       = "alb-origin"
     viewer_protocol_policy = "redirect-to-https"
-    allowed_methods        = ["GET", "HEAD", "OPTIONS", "PUT", "POST", "PATCH", "DELETE"]  # ✅ valid combo
+    allowed_methods        = ["GET", "HEAD", "OPTIONS", "PUT", "POST", "PATCH", "DELETE"] 
     cached_methods         = ["GET", "HEAD"]
     compress               = true
 
     forwarded_values {
       query_string = true
-      headers      = ["Authorization"]
-      cookies { forward = "all" }
+      headers      = ["Authorization", "CloudFront-Viewer-Country"]
+      cookies {
+        forward = "all"
+      }
     }
   }
 
   price_class = "PriceClass_100"
 
   restrictions {
-    geo_restriction { restriction_type = "none" }
+    geo_restriction {
+      restriction_type = "none"
+    }
   }
 
   viewer_certificate {
