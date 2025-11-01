@@ -58,24 +58,22 @@ jobs:
           sed -i "s/^image_tag *=.*/image_tag = \"${IMAGE_TAG}\"/g" terraform.tfvars || true
           terraform apply -auto-approve
 
+      # ✅ Upload Frontend Files to S3
       - name: Upload Frontend to S3
-        if: github.ref == 'refs/heads/main'
+        if: github.ref == 'refs/heads/main' && secrets.S3_FRONTEND_BUCKET
+        env:
+          S3_BUCKET: ${{ secrets.S3_FRONTEND_BUCKET }}
         run: |
-          if [ -n "${{ secrets.S3_FRONTEND_BUCKET }}" ]; then
-            echo "Uploading frontend assets to S3..."
-            aws s3 sync ./frontend "s3://${{ secrets.S3_FRONTEND_BUCKET }}" --delete
-          else
-            echo "⚠️ S3_FRONTEND_BUCKET secret not set — skipping upload."
-          fi
+          echo "Uploading frontend assets to S3 bucket: $S3_BUCKET"
+          aws s3 sync ./frontend "s3://$S3_BUCKET" --delete
 
+      # ✅ Invalidate CloudFront Cache
       - name: Invalidate CloudFront Cache
-        if: github.ref == 'refs/heads/main'
+        if: github.ref == 'refs/heads/main' && secrets.CLOUDFRONT_DIST_ID
+        env:
+          DIST_ID: ${{ secrets.CLOUDFRONT_DIST_ID }}
         run: |
-          if [ -n "${{ secrets.CLOUDFRONT_DIST_ID }}" ]; then
-            echo "Invalidating CloudFront cache..."
-            aws cloudfront create-invalidation \
-              --distribution-id "${{ secrets.CLOUDFRONT_DIST_ID }}" \
-              --paths "/*"
-          else
-            echo "⚠️ CLOUDFRONT_DIST_ID secret not set — skipping cache invalidation."
-          fi
+          echo "Invalidating CloudFront distribution: $DIST_ID"
+          aws cloudfront create-invalidation \
+            --distribution-id "$DIST_ID" \
+            --paths "/*"
