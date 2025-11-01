@@ -49,21 +49,22 @@ resource "aws_cloudfront_distribution" "frontend_cf" {
   }
 
   ordered_cache_behavior {
-    path_pattern           = "/api/*"
-    target_origin_id       = "alb-origin"
-    viewer_protocol_policy = "redirect-to-https"
-    allowed_methods        = ["GET", "HEAD", "OPTIONS", "PUT", "POST", "PATCH", "DELETE"] 
-    cached_methods         = ["GET", "HEAD"]
-    compress               = true
+  path_pattern           = "/api/*"
+  target_origin_id       = "alb-origin"
+  viewer_protocol_policy = "redirect-to-https"
+  allowed_methods        = ["GET", "HEAD", "OPTIONS", "PUT", "POST", "PATCH", "DELETE"]
+  cached_methods         = ["GET", "HEAD"]
+  compress               = true
 
-    forwarded_values {
-      query_string = true
-      headers      = ["Authorization", "CloudFront-Viewer-Country"]
-      cookies {
-        forward = "all"
-      }
+  forwarded_values {
+    query_string = true
+    headers      = ["Origin", "Access-Control-Request-Method", "Access-Control-Request-Headers"]
+    cookies {
+      forward = "none"
     }
   }
+}
+
 
   price_class = "PriceClass_100"
 
