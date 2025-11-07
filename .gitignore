@@ -1,32 +1,14 @@
-# Terraform
+# Terraform dirs and state
 **/.terraform/
-**/.terraform.lock.hcl
 **/terraform.tfstate*
-**/crash.log
-**/crash.*.log
-**/override.tf
-**/override.tf.json
-**/*_override.tf
+**/crash*.log
+**/*_override.tf*
 **/*_override.tf.json
-**/*.tfplan
-**/*.tfplan.*
 
-# Sensitive vars (default: ignore)
+# Lockfile: commit it
+!infrastructure/.terraform.lock.hcl
+
+# Vars: ignore by default, allow the one you commit
 **/*.tfvars
 **/*.tfvars.json
-# Allow committing the canonical vars file for CI
-!infra/terraform.tfvars
-
-# Node/Frontend
-app/node_modules/
-app/.next/
-app/dist/
-
-# Docker
-**/.env
-
-# OS/editor
-.DS_Store
-Thumbs.db
-.vscode/
-.idea/
+!infrastructure/terraform.tfvars
