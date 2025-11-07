@@ -7,11 +7,20 @@ on:
       - "app/**"
       - "infrastructure/**"
       - ".github/workflows/build-and-deploy.yml"
-  workflow_dispatch: {}
+  workflow_dispatch:
+    inputs:
+      lock_id:
+        description: "Optional Terraform state lock ID to force-unlock (from previous failed run)"
+        required: false
+        default: ""
 
 permissions:
   id-token: write
   contents: read
+
+concurrency:
+  group: infra-${{ github.ref }}
+  cancel-in-progress: true
 
 env:
   AWS_REGION: us-east-1
@@ -69,6 +78,12 @@ jobs:
         working-directory: ./infrastructure
         run: terraform init -input=false
 
+      # Optional manual unlock if a prior run left a lock in DynamoDB
+      - name: Force-unlock Terraform state (optional)
+        if: ${{ inputs.lock_id != '' }}
+        working-directory: ./infrastructure
+        run: terraform force-unlock -force "${{ inputs.lock_id }}"
+
       - name: Terraform Apply (verbose, bounded)
         timeout-minutes: 30
         working-directory: ./infrastructure
@@ -76,11 +91,4 @@ jobs:
           TF_VAR_image_tag: ${{ github.sha }}
           TF_LOG: INFO
           TF_LOG_PATH: terraform.log
-        run: terraform apply -no-color -input=false -lock-timeout=20m -parallelism=5 -auto-approve
-
-      - name: Upload Terraform log
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: terraform-log
-          path: infrastructure/terraform.log
+        run: terraform apply -no-color -input=false -lock-timeout=20m -parall
