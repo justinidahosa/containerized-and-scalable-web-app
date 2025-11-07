@@ -14,7 +14,7 @@ Route 53 + ACM, CloudFront, S3 (static), API Gateway (JWT), ALB, ECS/Fargate, Dy
 
 ```
 bootstrap-backend/  # S3 tfstate + DynamoDB lock (one‑time)
-infrastructure/              # Terraform root (uses ../modules/*)
+infrastructure/     # Terraform root (uses ../modules/*)
 modules/            # network, acm, route53, s3_static, cloudfront, apigw,
                     # alb, ecs, ecr, dynamodb_app, cognito, cloudwatch, iam_github_oidc
 app/                # Node/Express sample (port 3000)
