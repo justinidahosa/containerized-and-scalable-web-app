@@ -1,0 +1,14 @@
+{
+  "name": "fargate-webapp",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "@aws-sdk/client-dynamodb": "^3.645.0",
+    "express": "^4.19.2"
+  }
+}

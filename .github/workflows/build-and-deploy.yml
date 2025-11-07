@@ -1,0 +1,54 @@
+name: Build, Push, Terraform Apply
+
+on:
+  push:
+    branches: [ "main" ]
+    paths:
+      - "app/**"
+      - "infra/**"
+      - ".github/workflows/build-and-deploy.yml"
+
+permissions:
+  id-token: write
+  contents: read
+
+env:
+  AWS_REGION: us-east-1
+
+jobs:
+  build-and-apply:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Configure AWS (OIDC)
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_GITHUB_ROLE_ARN }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Log in to ECR
+        id: ecr
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Build and push image
+        working-directory: ./app
+        run: |
+          REPO=$(aws ecr describe-repositories --repository-names "${{ vars.ECR_REPO_NAME }}" --query 'repositories[0].repositoryUri' --output text)
+          docker build -t "$REPO:${{ github.sha }}" .
+          docker push "$REPO:${{ github.sha }}"
+          echo "REPO_URL=$REPO" >> $GITHUB_ENV
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with: { terraform_version: 1.8.5 }
+
+      - name: Terraform Init
+        working-directory: ./infra
+        run: terraform init -input=false
+
+      - name: Terraform Apply (image tag = commit SHA)
+        working-directory: ./infra
+        env:
+          TF_VAR_image_tag: ${{ github.sha }}
+        run: terraform apply -auto-approve
