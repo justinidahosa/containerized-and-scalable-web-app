@@ -19,6 +19,7 @@ env:
 jobs:
   build-and-apply:
     runs-on: ubuntu-latest
+    timeout-minutes: 45
     steps:
       - uses: actions/checkout@v4
 
@@ -41,7 +42,7 @@ jobs:
           if [[ -z "$NAME" ]]; then
             echo "ECR_REPO_NAME is empty"; exit 1
           fi
-          # Valid per ECR: lowercase, digits, . _ -, optional namespaces separated by /
+          # lowercase, digits, . _ -, optional namespaces via /
           if [[ ! "$NAME" =~ ^[a-z0-9]+([._-][a-z0-9]+)*(/[a-z0-9]+([._-][a-z0-9]+)*)*$ ]]; then
             echo "Invalid ECR repo name: '$NAME'"; exit 1
           fi
@@ -68,8 +69,18 @@ jobs:
         working-directory: ./infrastructure
         run: terraform init -input=false
 
-      - name: Terraform Apply (image tag = commit SHA)
+      - name: Terraform Apply (verbose, bounded)
+        timeout-minutes: 30
         working-directory: ./infrastructure
         env:
           TF_VAR_image_tag: ${{ github.sha }}
-        run: terraform apply -auto-approve
+          TF_LOG: INFO
+          TF_LOG_PATH: terraform.log
+        run: terraform apply -no-color -input=false -lock-timeout=20m -parallelism=5 -auto-approve
+
+      - name: Upload Terraform log
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: terraform-log
+          path: infrastructure/terraform.log
