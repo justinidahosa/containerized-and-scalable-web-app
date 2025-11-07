@@ -7,12 +7,7 @@ on:
       - "app/**"
       - "infrastructure/**"
       - ".github/workflows/build-and-deploy.yml"
-  workflow_dispatch:
-    inputs:
-      lock_id:
-        description: "Optional Terraform state lock ID to force-unlock"
-        required: false
-        default: ""
+  workflow_dispatch: {}
 
 permissions:
   id-token: write
@@ -24,6 +19,7 @@ concurrency:
 
 env:
   AWS_REGION: us-east-1
+  LOCK_TABLE: tfstate-locks-justin-web-app    
 
 jobs:
   build-and-apply:
@@ -51,12 +47,11 @@ jobs:
           if [[ -z "$NAME" ]]; then
             echo "ECR_REPO_NAME is empty"; exit 1
           fi
-          # lowercase, digits, . _ -, optional namespaces via /
           if [[ ! "$NAME" =~ ^[a-z0-9]+([._-][a-z0-9]+)*(/[a-z0-9]+([._-][a-z0-9]+)*)*$ ]]; then
             echo "Invalid ECR repo name: '$NAME'"; exit 1
           fi
           aws ecr describe-repositories --repository-names "$NAME" >/dev/null 2>&1 || \
-            aws ecr create-repository --repository-name "$NAME" >/dev/null
+            aws ecr create-repository --repository-name "$NAME" >/dev-null
           URI="$(aws ecr describe-repositories --repository-names "$NAME" --query 'repositories[0].repositoryUri' --output text)"
           echo "REPO_URI=$URI" >> "$GITHUB_ENV"
 
@@ -78,10 +73,23 @@ jobs:
         working-directory: ./infrastructure
         run: terraform init -input=false
 
-      - name: Force-unlock Terraform state (optional)
-        if: ${{ inputs.lock_id != '' }}
+      # Auto-unlock any stale locks in the lock table (safe due to concurrency group)
+      - name: Auto-unlock Terraform state (stale locks)
+        shell: bash
         working-directory: ./infrastructure
-        run: terraform force-unlock -force "${{ inputs.lock_id }}"
+        run: |
+          set -Eeuo pipefail
+          IDS=$(aws dynamodb scan --table-name "$LOCK_TABLE" \
+                 --projection-expression LockID \
+                 --query 'Items[].LockID.S' --output text 2>/dev/null || true)
+          if [[ -n "$IDS" ]]; then
+            for id in $IDS; do
+              echo "Force-unlocking $id"
+              terraform force-unlock -force "$id" || true
+            done
+          else
+            echo "No locks found in $LOCK_TABLE"
+          fi
 
       - name: Terraform Apply (verbose, bounded)
         timeout-minutes: 30
