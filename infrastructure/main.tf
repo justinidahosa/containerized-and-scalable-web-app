@@ -72,6 +72,7 @@ module "cloudfront" {
   domain_name            = var.domain_name
   certificate_arn        = module.acm.certificate_arn
   s3_bucket_domain_name  = module.s3_static.bucket_regional_domain_name
+  s3_bucket_name        = module.s3_static.bucket_name
   s3_bucket_arn          = module.s3_static.bucket_arn
   api_domain_name        = module.apigw.api_domain_name
 }
