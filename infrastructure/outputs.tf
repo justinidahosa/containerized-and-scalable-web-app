@@ -10,6 +10,7 @@ output "api_execute_url"   {
 output "ecr_repo_url"      { 
     value = module.ecr.repo_url 
 }
-output "iam_ci_role_arn"   { 
-    value = module.iam_github.role_arn 
+output "iam_ci_role_arn" {
+  value = module.iam_github.iam_ci_role_arn
 }
+

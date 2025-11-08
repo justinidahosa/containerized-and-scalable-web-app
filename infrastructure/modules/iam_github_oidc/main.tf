@@ -28,22 +28,22 @@ resource "aws_iam_policy" "tf_state" {
     Version = "2012-10-17",
     Statement = [
       {
-        Sid    = "ListStatePrefix",
-        Effect = "Allow",
-        Action = ["s3:ListBucket"],
+        Sid     = "ListStatePrefix",
+        Effect  = "Allow",
+        Action  = ["s3:ListBucket"],
         Resource = "arn:aws:s3:::${var.state_bucket_name}",
-        Condition = { StringLike = { "s3:prefix": ["${var.state_bucket_prefix}*",""] } }
+        Condition = { StringLike = { "s3:prefix": ["${var.state_bucket_prefix}*", ""] } }
       },
       {
-        Sid    = "RWStateObjects",
-        Effect = "Allow",
-        Action = ["s3:GetObject","s3:PutObject","s3:DeleteObject"],
+        Sid     = "RWStateObjects",
+        Effect  = "Allow",
+        Action  = ["s3:GetObject","s3:PutObject","s3:DeleteObject"],
         Resource = "arn:aws:s3:::${var.state_bucket_name}/${var.state_bucket_prefix}*"
       },
       {
-        Sid    = "StateLockTable",
-        Effect = "Allow",
-        Action = ["dynamodb:GetItem","dynamodb:PutItem","dynamodb:DeleteItem","dynamodb:UpdateItem","dynamodb:DescribeTable"],
+        Sid     = "StateLockTable",
+        Effect  = "Allow",
+        Action  = ["dynamodb:GetItem","dynamodb:PutItem","dynamodb:DeleteItem","dynamodb:UpdateItem","dynamodb:DescribeTable","dynamodb:Scan"],
         Resource = var.lock_table_arn
       }
     ]
@@ -60,7 +60,7 @@ resource "aws_iam_policy" "ecr_push" {
         Effect = "Allow",
         Action = [
           "ecr:BatchCheckLayerAvailability","ecr:CompleteLayerUpload","ecr:DescribeRepositories",
-          "ecr:InitiateLayerUpload","ecr:PutImage","ecr:UploadLayerPart","ecr:BatchGetImage"
+          "ecr:InitiateLayerUpload","ecr:PutImage","ecr:UploadLayerPart","ecr:BatchGetImage","ecr:ListTagsForResource"
         ],
         Resource = var.ecr_repo_arn
       }
@@ -86,17 +86,23 @@ resource "aws_iam_policy" "ecs_deploy" {
   })
 }
 
-resource "aws_iam_role_policy_attachment" "a1" { 
-    role = aws_iam_role.ci.name 
-    policy_arn = aws_iam_policy.tf_state.arn 
+resource "aws_iam_role_policy_attachment" "a1" {
+  role       = aws_iam_role.ci.name
+  policy_arn = aws_iam_policy.tf_state.arn
 }
-resource "aws_iam_role_policy_attachment" "a2" { 
-    role = aws_iam_role.ci.name 
-    policy_arn = aws_iam_policy.ecr_push.arn 
+resource "aws_iam_role_policy_attachment" "a2" {
+  role       = aws_iam_role.ci.name
+  policy_arn = aws_iam_policy.ecr_push.arn
 }
-resource "aws_iam_role_policy_attachment" "a3" { 
-    role = aws_iam_role.ci.name 
-    policy_arn = aws_iam_policy.ecs_deploy.arn 
+resource "aws_iam_role_policy_attachment" "a3" {
+  role       = aws_iam_role.ci.name
+  policy_arn = aws_iam_policy.ecs_deploy.arn
 }
+
+resource "aws_iam_role_policy_attachment" "ci_admin" {
+  role       = aws_iam_role.ci.name
+  policy_arn = "arn:aws:iam::aws:policy/AdministratorAccess"
+}
+
 
 
