@@ -25,6 +25,7 @@ resource "aws_cloudfront_distribution" "dist" {
   origin {
     origin_id   = "apigw"
     domain_name = replace(replace(var.api_domain_name, "https://", ""), "http://", "")
+    origin_path = "/prod"
     custom_origin_config {
       http_port              = 80
       https_port             = 443
