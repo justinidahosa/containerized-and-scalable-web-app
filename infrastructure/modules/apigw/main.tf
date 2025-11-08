@@ -23,7 +23,7 @@ resource "aws_apigatewayv2_integration" "alb" {
   api_id                 = aws_apigatewayv2_api.api.id
   integration_type       = "HTTP_PROXY"
   integration_method     = "ANY"
-  integration_uri        = var.target_alb_url                 
+  integration_uri        = "http://${var.alb_dns_name}"           
   payload_format_version = "1.0"
 }
 

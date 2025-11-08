@@ -13,3 +13,6 @@ variable "cognito_issuer"     {
 variable "audience_client_id" { 
     type = string 
 }
+variable "alb_dns_name" {
+  type = string
+}

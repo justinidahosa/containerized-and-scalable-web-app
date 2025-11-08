@@ -60,6 +60,7 @@ module "apigw" {
   target_alb_url    = "https://${module.alb.alb_dns_name}"
   cognito_issuer    = module.cognito.issuer_url
   audience_client_id= module.cognito.user_pool_client_id
+  alb_dns_name      = module.alb.alb_dns_name
 }
 
 module "s3_static" {
