@@ -39,17 +39,22 @@ resource "aws_cloudfront_distribution" "dist" {
     viewer_protocol_policy = "redirect-to-https"
     allowed_methods        = ["GET", "HEAD"]
     cached_methods         = ["GET", "HEAD"]
-    cache_policy_id        = "658327ea-f89d-4fab-a63d-7e88639e58f6" # Managed CachingOptimized
+    cache_policy_id        = "658327ea-f89d-4fab-a63d-7e88639e58f6" 
   }
 
   ordered_cache_behavior {
-    path_pattern           = "/api/*"
-    target_origin_id       = "apigw"
-    viewer_protocol_policy = "redirect-to-https"
-    allowed_methods        = ["GET", "HEAD", "OPTIONS", "PUT", "POST", "PATCH", "DELETE"]
-    cached_methods         = ["GET", "HEAD", "OPTIONS"]
-    cache_policy_id        = "4135ea2d-6df8-44a3-9df3-4b5a84be39ad" # Managed CachingDisabled
-  }
+  path_pattern           = "/api/*"
+  target_origin_id       = "apigw"
+  viewer_protocol_policy = "redirect-to-https"
+
+  allowed_methods = ["GET", "HEAD", "OPTIONS", "PUT", "POST", "PATCH", "DELETE"]
+  cached_methods  = ["GET", "HEAD", "OPTIONS"]
+
+  cache_policy_id          = "4135ea2d-6df8-44a3-9df3-4b5a84be39ad"   
+  origin_request_policy_id = "216adef6-5c7f-47e4-b989-5492eafa07d3"  
+}
+
+
 
   restrictions {
     geo_restriction { restriction_type = "none" }
@@ -77,3 +82,5 @@ resource "aws_s3_bucket_policy" "allow_cf" {
     }]
   })
 }
+
+
