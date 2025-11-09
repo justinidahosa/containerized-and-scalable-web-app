@@ -9,4 +9,4 @@ variable "container_port" {
 }
 variable "acm_certificate_arn" {
   type = string
-} # from acm module
+}

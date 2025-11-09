@@ -1,5 +1,3 @@
-# modules/cloudfront/main.tf
-
 resource "aws_cloudfront_origin_access_control" "oac" {
   name                              = "oac-s3"
   description                       = "OAC for S3"
@@ -14,14 +12,12 @@ resource "aws_cloudfront_distribution" "dist" {
   default_root_object = "index.html"
   price_class         = "PriceClass_100"
 
-  # S3 static origin with OAC (no s3_origin_config when using OAC)
   origin {
     origin_id                = "s3-static"
-    domain_name              = var.s3_bucket_domain_name # e.g. bucket.s3.us-east-1.amazonaws.com
+    domain_name              = var.s3_bucket_domain_name 
     origin_access_control_id = aws_cloudfront_origin_access_control.oac.id
   }
 
-  # API Gateway origin
   origin {
     origin_id   = "apigw"
     domain_name = replace(replace(var.api_domain_name, "https://", ""), "http://", "")

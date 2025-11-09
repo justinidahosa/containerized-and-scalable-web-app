@@ -20,8 +20,6 @@ concurrency:
 
 env:
   AWS_REGION: us-east-1
-  # If you have a DynamoDB lock table, set it as a repo variable or here.
-  # Leave empty to skip auto-unlock.
   LOCK_TABLE: ${{ vars.LOCK_TABLE }}
 
 jobs:

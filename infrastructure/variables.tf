@@ -78,7 +78,7 @@ variable "lock_table_arn" {
   type = string
 }
 variable "stage_name" { type = string }
-variable "api_origin_path" { type = string } # consumed by cloudfront module
+variable "api_origin_path" { type = string }
 
 variable "region" {
   type    = string
