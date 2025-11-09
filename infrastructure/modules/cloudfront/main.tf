@@ -17,7 +17,7 @@ resource "aws_cloudfront_distribution" "dist" {
   # S3 static origin with OAC (no s3_origin_config when using OAC)
   origin {
     origin_id                = "s3-static"
-    domain_name              = var.s3_bucket_domain_name   # e.g. bucket.s3.us-east-1.amazonaws.com
+    domain_name              = var.s3_bucket_domain_name # e.g. bucket.s3.us-east-1.amazonaws.com
     origin_access_control_id = aws_cloudfront_origin_access_control.oac.id
   }
 
@@ -68,12 +68,12 @@ resource "aws_s3_bucket_policy" "allow_cf" {
   policy = jsonencode({
     Version = "2012-10-17",
     Statement = [{
-      Sid: "AllowCloudFrontOACRead",
-      Effect: "Allow",
-      Principal: { Service: "cloudfront.amazonaws.com" },
-      Action: ["s3:GetObject"],
-      Resource: ["${var.s3_bucket_arn}/*"],
-      Condition: { StringEquals: { "AWS:SourceArn": aws_cloudfront_distribution.dist.arn } }
+      Sid : "AllowCloudFrontOACRead",
+      Effect : "Allow",
+      Principal : { Service : "cloudfront.amazonaws.com" },
+      Action : ["s3:GetObject"],
+      Resource : ["${var.s3_bucket_arn}/*"],
+      Condition : { StringEquals : { "AWS:SourceArn" : aws_cloudfront_distribution.dist.arn } }
     }]
   })
 }

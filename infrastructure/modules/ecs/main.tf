@@ -80,9 +80,9 @@ resource "aws_ecs_task_definition" "td" {
   task_role_arn      = aws_iam_role.task.arn
 
   container_definitions = jsonencode([{
-    name       = "app"
-    image      = var.image
-    essential  = true
+    name      = "app"
+    image     = var.image
+    essential = true
     portMappings = [{
       containerPort = var.container_port
       protocol      = "tcp"
@@ -110,8 +110,8 @@ resource "aws_ecs_service" "svc" {
   launch_type     = "FARGATE"
 
   network_configuration {
-    subnets         = var.private_subnet_ids
-    security_groups = [aws_security_group.ecs_tasks.id]
+    subnets          = var.private_subnet_ids
+    security_groups  = [aws_security_group.ecs_tasks.id]
     assign_public_ip = false
   }
 

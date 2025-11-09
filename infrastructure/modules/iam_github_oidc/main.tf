@@ -9,9 +9,9 @@ resource "aws_iam_role" "ci" {
   assume_role_policy = jsonencode({
     Version = "2012-10-17",
     Statement = [{
-      Effect = "Allow",
+      Effect    = "Allow",
       Principal = { Federated = aws_iam_openid_connect_provider.gh.arn },
-      Action = "sts:AssumeRoleWithWebIdentity",
+      Action    = "sts:AssumeRoleWithWebIdentity",
       Condition = {
         StringEquals = {
           "token.actions.githubusercontent.com:aud" = "sts.amazonaws.com",
@@ -28,22 +28,22 @@ resource "aws_iam_policy" "tf_state" {
     Version = "2012-10-17",
     Statement = [
       {
-        Sid     = "ListStatePrefix",
-        Effect  = "Allow",
-        Action  = ["s3:ListBucket"],
-        Resource = "arn:aws:s3:::${var.state_bucket_name}",
-        Condition = { StringLike = { "s3:prefix": ["${var.state_bucket_prefix}*", ""] } }
+        Sid       = "ListStatePrefix",
+        Effect    = "Allow",
+        Action    = ["s3:ListBucket"],
+        Resource  = "arn:aws:s3:::${var.state_bucket_name}",
+        Condition = { StringLike = { "s3:prefix" : ["${var.state_bucket_prefix}*", ""] } }
       },
       {
-        Sid     = "RWStateObjects",
-        Effect  = "Allow",
-        Action  = ["s3:GetObject","s3:PutObject","s3:DeleteObject"],
+        Sid      = "RWStateObjects",
+        Effect   = "Allow",
+        Action   = ["s3:GetObject", "s3:PutObject", "s3:DeleteObject"],
         Resource = "arn:aws:s3:::${var.state_bucket_name}/${var.state_bucket_prefix}*"
       },
       {
-        Sid     = "StateLockTable",
-        Effect  = "Allow",
-        Action  = ["dynamodb:GetItem","dynamodb:PutItem","dynamodb:DeleteItem","dynamodb:UpdateItem","dynamodb:DescribeTable","dynamodb:Scan"],
+        Sid      = "StateLockTable",
+        Effect   = "Allow",
+        Action   = ["dynamodb:GetItem", "dynamodb:PutItem", "dynamodb:DeleteItem", "dynamodb:UpdateItem", "dynamodb:DescribeTable", "dynamodb:Scan"],
         Resource = var.lock_table_arn
       }
     ]
@@ -59,8 +59,8 @@ resource "aws_iam_policy" "ecr_push" {
       {
         Effect = "Allow",
         Action = [
-          "ecr:BatchCheckLayerAvailability","ecr:CompleteLayerUpload","ecr:DescribeRepositories",
-          "ecr:InitiateLayerUpload","ecr:PutImage","ecr:UploadLayerPart","ecr:BatchGetImage","ecr:ListTagsForResource"
+          "ecr:BatchCheckLayerAvailability", "ecr:CompleteLayerUpload", "ecr:DescribeRepositories",
+          "ecr:InitiateLayerUpload", "ecr:PutImage", "ecr:UploadLayerPart", "ecr:BatchGetImage", "ecr:ListTagsForResource"
         ],
         Resource = var.ecr_repo_arn
       }
@@ -77,10 +77,10 @@ resource "aws_iam_policy" "ecs_deploy" {
       { Effect = "Allow", Action = ["ecs:RegisterTaskDefinition"], Resource = "*" },
       { Effect = "Allow", Action = ["ecs:UpdateService"], Resource = var.ecs_service_arn },
       {
-        Effect = "Allow",
-        Action = ["iam:PassRole"],
-        Resource = [var.task_role_arn, var.execution_role_arn],
-        Condition = { StringEquals = { "iam:PassedToService": "ecs-tasks.amazonaws.com" } }
+        Effect    = "Allow",
+        Action    = ["iam:PassRole"],
+        Resource  = [var.task_role_arn, var.execution_role_arn],
+        Condition = { StringEquals = { "iam:PassedToService" : "ecs-tasks.amazonaws.com" } }
       }
     ]
   })
