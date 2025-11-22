@@ -1,0 +1,14 @@
+# Terraform dirs and state
+**/.terraform/
+**/terraform.tfstate*
+**/crash*.log
+**/*_override.tf*
+**/*_override.tf.json
+
+# Lockfile: commit it
+!infrastructure/.terraform.lock.hcl
+
+# Vars: ignore by default, allow the one you commit
+**/*.tfvars
+**/*.tfvars.json
+!infrastructure/terraform.tfvars

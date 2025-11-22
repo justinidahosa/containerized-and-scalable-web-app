@@ -1,0 +1,131 @@
+name: Build, Push, Terraform Apply
+
+on:
+  push:
+    branches: ["main"]         
+  workflow_dispatch:
+    inputs:
+      lock_id:
+        description: "Optional Terraform state lock ID to force-unlock"
+        required: false
+        default: ""
+
+permissions:
+  id-token: write
+  contents: read
+
+concurrency:
+  group: infra-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  AWS_REGION: us-east-1
+  LOCK_TABLE: ${{ vars.LOCK_TABLE }}
+
+jobs:
+  build-and-apply:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Configure AWS (OIDC)
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_GITHUB_ROLE_ARN }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Log in to ECR
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Resolve ECR repo URI (trim, validate, create if missing)
+        shell: bash
+        env:
+          NAME_RAW: ${{ vars.ECR_REPO_NAME }}
+        run: |
+          set -Eeuo pipefail
+          NAME="$(printf '%s' "$NAME_RAW" | tr -d '[:space:]')"
+          if [[ -z "$NAME" ]]; then echo "ECR_REPO_NAME is empty"; exit 1; fi
+          if [[ ! "$NAME" =~ ^[a-z0-9]+([._-][a-z0-9]+)*(/[a-z0-9]+([._-][a-z0-9]+)*)*$ ]]; then
+            echo "Invalid ECR repo name: '$NAME'"; exit 1
+          fi
+          aws ecr describe-repositories --repository-names "$NAME" >/dev/null 2>&1 || \
+            aws ecr create-repository --repository-name "$NAME" >/dev/null
+          URI="$(aws ecr describe-repositories --repository-names "$NAME" --query 'repositories[0].repositoryUri' --output text)"
+          echo "REPO_URI=$URI" >> "$GITHUB_ENV"
+
+      - name: Build and push image
+        shell: bash
+        working-directory: ./app
+        run: |
+          set -Eeuo pipefail
+          docker build -t "$REPO_URI:${{ github.sha }}" .
+          docker push "$REPO_URI:${{ github.sha }}"
+          echo "REPO_URL=$REPO_URI" >> "$GITHUB_ENV"
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: 1.8.5
+
+      - name: Terraform Init
+        working-directory: ./infrastructure
+        run: terraform init -input=false
+
+      - name: Verify terraform.tfvars exists and list keys
+        shell: bash
+        working-directory: ./infrastructure
+        run: |
+          set -Eeuo pipefail
+          test -f terraform.tfvars || { echo "Missing infrastructure/terraform.tfvars"; exit 1; }
+          echo "Found terraform.tfvars. Keys present:"
+          sed -E 's/^[[:space:]]*#.*$//; s/[[:space:]]+$//' terraform.tfvars | \
+            grep -E '^[a-zA-Z0-9_]+[[:space:]]*=' | cut -d'=' -f1 | xargs -I{} echo " - {}"
+
+      - name: Auto-unlock stale Terraform locks (skip if no table)
+        shell: bash
+        working-directory: ./infrastructure
+        run: |
+          set -Eeuo pipefail
+          if [[ -z "${LOCK_TABLE:-}" ]]; then
+            echo "LOCK_TABLE not set. Skipping auto-unlock."
+            exit 0
+          fi
+          if aws dynamodb describe-table --table-name "$LOCK_TABLE" >/dev/null 2>&1; then
+            ids=$(aws dynamodb scan --table-name "$LOCK_TABLE" \
+                  --projection-expression LockID \
+                  --query 'Items[].LockID.S' --output text || true)
+            if [[ -n "$ids" ]]; then
+              for id in $ids; do
+                echo "Force-unlocking $id"
+                terraform force-unlock -force "$id" || true
+              done
+            else
+              echo "No locks found in $LOCK_TABLE"
+            fi
+          else
+            echo "DynamoDB table $LOCK_TABLE not found. Skipping auto-unlock."
+          fi
+
+      - name: Force-unlock specific lock (manual input)
+        if: ${{ inputs.lock_id != '' }}
+        working-directory: ./infrastructure
+        run: terraform force-unlock -force "${{ inputs.lock_id }}"
+
+      - name: Terraform Apply (uses terraform.tfvars)
+        timeout-minutes: 30
+        working-directory: ./infrastructure
+        env:
+          TF_VAR_image_tag: ${{ github.sha }}
+          TF_VAR_github_org: ${{ github.repository_owner }}
+          TF_VAR_github_repo: ${{ github.event.repository.name }}
+          TF_LOG: INFO
+          TF_LOG_PATH: terraform.log
+        run: terraform apply -no-color -input=false -lock-timeout=20m -parallelism=5 -auto-approve -var-file=terraform.tfvars
+
+      - name: Upload Terraform log
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: terraform-log
+          path: infrastructure/terraform.log
